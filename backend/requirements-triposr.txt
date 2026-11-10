@@ -1,0 +1,9 @@
+# Extra dependencies for the TripoSR route only (install after requirements.txt).
+# TripoSR itself is cloned by scripts/setup_triposr.sh (it is not on PyPI).
+# torchmcubes compiles C++/CUDA code: use Linux/Colab, or Windows with MSVC build tools + CUDA toolkit.
+rembg[cpu]>=2.0.57
+omegaconf>=2.3
+einops>=0.7
+huggingface-hub>=0.24
+imageio>=2.33
+moderngl>=5.10

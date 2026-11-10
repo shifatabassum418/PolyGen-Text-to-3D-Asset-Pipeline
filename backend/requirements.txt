@@ -1,0 +1,21 @@
+# Core dependencies (Shap-E route, texturing, API).
+# Install PyTorch FIRST for your platform, e.g. on a CUDA machine:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# Google Colab already ships PyTorch with CUDA, so skip that step there.
+#
+# NOTE: version bounds below are conservative but were NOT verified against every platform.
+# If pip reports a conflict, relax the bound that it names.
+diffusers>=0.30.0,<0.36
+transformers>=4.44.0,<4.57
+accelerate>=0.33.0
+safetensors>=0.4.3
+numpy>=1.26
+scipy>=1.11
+pillow>=10.0
+trimesh>=4.4.0
+networkx>=3.2
+xatlas>=0.0.9
+fastapi>=0.111
+uvicorn[standard]>=0.30
+httpx>=0.27
+pytest>=8.0

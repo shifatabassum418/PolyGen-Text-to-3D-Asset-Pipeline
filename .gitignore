@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Environment files and secrets (the .env.example template IS committed)
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+
+# Generated assets and downloaded models (large)
+backend/outputs/
+backend/third_party/
+*.ckpt
+*.safetensors
+*.pth
+
+# Notebooks / editors / OS
+.ipynb_checkpoints/
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
