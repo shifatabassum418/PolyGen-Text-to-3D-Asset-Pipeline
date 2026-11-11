@@ -31,6 +31,20 @@ class ApiTests(unittest.TestCase):
 
     def test_prompt_too_short_is_rejected(self):
         self.assertEqual(self.client.post("/api/generate", json={"prompt": "a"}).status_code, 422)
+    def test_whitespace_only_prompt_is_rejected(self):
+        response = self.client.post(
+            "/api/generate",
+            json={"prompt": "     "}
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_prompt_is_trimmed(self):
+        response = self.client.post(
+            "/api/generate",
+            json={"prompt": "  a wooden chair  "}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["prompt"], "a wooden chair")
 
     def test_unknown_generator_is_rejected(self):
         r = self.client.post("/api/generate", json={"prompt": "a chair", "generator": "nope"})

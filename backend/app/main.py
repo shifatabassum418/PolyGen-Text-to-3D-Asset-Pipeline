@@ -1,3 +1,4 @@
+
 import threading
 import traceback
 import uuid
@@ -6,13 +7,18 @@ from pathlib import Path
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .config import settings
 from .pipeline import run_pipeline
 
 app = FastAPI(title="PolyGen")
-app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(settings.cors_origins),
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 settings.output_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/files", StaticFiles(directory=settings.output_dir), name="files")
@@ -27,6 +33,13 @@ class GenerateRequest(BaseModel):
     seed: int | None = None
     texture: str = Field(default="controlnet", pattern="^(none|flat|controlnet)$")
 
+    @field_validator("prompt", mode="before")
+    @classmethod
+    def clean_prompt(cls, value):
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
 
 def _run(job_id: str, req: GenerateRequest):
     job = JOBS[job_id]
@@ -36,7 +49,15 @@ def _run(job_id: str, req: GenerateRequest):
 
     try:
         with GPU_LOCK:
-            result = run_pipeline(req.prompt, settings.output_dir / job_id, req.generator, req.seed, req.texture, progress)
+            result = run_pipeline(
+                req.prompt,
+                settings.output_dir / job_id,
+                req.generator,
+                req.seed,
+                req.texture,
+                progress
+            )
+
         base = f"/files/{job_id}/"
         job["result"] = {
             "obj_url": base + result["obj"],
@@ -44,7 +65,8 @@ def _run(job_id: str, req: GenerateRequest):
             "stats": result["stats"],
         }
         job["status"], job["stage"] = "done", "done"
-    except Exception as e:  # surface the failure to the UI instead of hanging
+
+    except Exception as e:
         traceback.print_exc()
         job["status"], job["error"] = "error", f"{type(e).__name__}: {e}"
 
@@ -53,19 +75,33 @@ def _run(job_id: str, req: GenerateRequest):
 def health():
     try:
         import torch
-
         device = "cuda" if torch.cuda.is_available() else "cpu"
     except ImportError:
         device = "torch-not-installed"
-    return {"ok": True, "device": device, "triposr_installed": settings.triposr_dir.exists()}
+
+    return {
+        "ok": True,
+        "device": device,
+        "triposr_installed": settings.triposr_dir.exists()
+    }
 
 
 @app.post("/api/generate")
 def generate(req: GenerateRequest, bg: BackgroundTasks):
     if req.generator == "triposr" and not settings.triposr_dir.exists():
-        raise HTTPException(400, "TripoSR is not installed. Run scripts/setup_triposr.sh first.")
+        raise HTTPException(
+            400,
+            "TripoSR is not installed. Run scripts/setup_triposr.sh first."
+        )
+
     job_id = uuid.uuid4().hex[:12]
-    JOBS[job_id] = {"id": job_id, "status": "running", "stage": "queued", "prompt": req.prompt}
+    JOBS[job_id] = {
+        "id": job_id,
+        "status": "running",
+        "stage": "queued",
+        "prompt": req.prompt
+    }
+
     bg.add_task(_run, job_id, req)
     return JOBS[job_id]
 
