@@ -86,6 +86,12 @@ class ApiTests(unittest.TestCase):
         r = self.client.post("/api/generate", json={"prompt": "a wooden chair", "generator": "triposr"})
         self.assertEqual(r.status_code, 400)
 
+    def test_prompt_at_max_length_is_accepted(self):
+        request = self.main.GenerateRequest(prompt="a" * 300)
+        self.assertEqual(len(request.prompt), 300)
 
+    def test_prompt_over_max_length_is_rejected(self):
+        with self.assertRaises(Exception):
+            self.main.GenerateRequest(prompt="a" * 301)
 if __name__ == "__main__":
     unittest.main()
