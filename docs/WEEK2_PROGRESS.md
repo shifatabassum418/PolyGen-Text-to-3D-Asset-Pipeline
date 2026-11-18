@@ -1,19 +1,19 @@
 # PolyGen — Week 2 Progress
 
-## Milestone: UV Unwrapping
+## Milestone: UV Unwrapping and ControlNet Texturing
 
-**Status:** Completed and locally verified
+**Status:** Core Week 2 pipeline implemented and verified.
 
-The Week 1 generated chair mesh was successfully processed using the project's existing xatlas UV-unwrapping implementation.
+### 1. UV Unwrapping
 
-### Implementation
+The Week 1 chair mesh was processed using the existing xatlas UV-unwrapping implementation.
 
-- UV unwrapping module: `backend/app/uv.py`
-- Command-line script: `scripts/uv_unwrap.py`
-- Mesh processing uses Trimesh.
-- UV atlas generation uses xatlas.
+- Module: `backend/app/uv.py`
+- CLI script: `scripts/uv_unwrap.py`
+- Mesh processing: Trimesh
+- UV generation: xatlas
 
-### Verification Results
+**Verification results:**
 
 | Metric | Result |
 |---|---:|
@@ -25,22 +25,62 @@ The Week 1 generated chair mesh was successfully processed using the project's e
 
 All UV coordinates are within the expected 0–1 range.
 
-### Generated Files
+### 2. ControlNet Texture Generation
 
-Located in `outputs/week2/`:
+Implemented an automated pipeline:
 
-- `chair_uv.obj` — UV-unwrapped chair mesh
-- `chair_uv.uv.png` — UV layout preview
-- `material.mtl` — OBJ material definition
-- `material_0.png` — Exported 2×2 placeholder material image
+`scripts/generate_controlnet_texture.py`
 
-The OBJ correctly references its MTL file, and the MTL references the placeholder image.
+The pipeline:
+1. Loads a UV-unwrapped OBJ mesh.
+2. Renders a depth map.
+3. Generates a depth-guided texture using Stable Diffusion ControlNet.
+4. Bakes the generated image into the UV atlas.
+5. Exports the textured OBJ, MTL, and texture image.
 
-### Remaining Week 2 Work
+**Successful Colab T4 test configuration:**
+- Resolution: 512 × 512
+- Inference steps: 20
+- Seed: 42
+- Conditioning scale: 0.8
+- UV atlas resolution: 1024 × 1024
 
-- Verify Stable Diffusion ControlNet depth-based texture generation.
-- Generate a texture from the same chair prompt.
-- Bake the generated texture into the UV atlas.
-- Verify the textured mesh in the Three.js viewer.
+### 3. Generated Example Assets
 
-**Note:** UV unwrapping has been verified. ControlNet texturing and texture baking are not yet confirmed complete.
+Located in `outputs/week2_automated/`:
+
+- `chair_automated.obj`
+- `chair_automated.mtl`
+- `chair_automated_texture.png`
+- `chair_automated_depth.png`
+- `chair_automated_controlnet.png`
+
+The automated generation, baking, and export completed successfully.
+
+### 4. Three.js Viewer
+
+The previously exported textured chair was successfully loaded in the React Three.js viewer using its OBJ and MTL files.
+
+The viewer supports textured mesh rendering, lighting, and orbit controls.
+
+### 5. Automated Tests
+
+Targeted tests passed locally:
+
+- `tests/test_depth_texturing.py`
+- `tests/test_mesh_uv.py`
+
+**Result: 15 tests passed locally.**
+
+### 6. Known Limitations
+
+- Texture projection is a first-pass approach based on a rendered depth view.
+- Occlusion and back-facing surface coverage are approximate.
+- Full multi-view texturing is not implemented.
+- PBR roughness, metallic, and normal maps remain future improvements.
+
+### Week 2 Summary
+
+UV unwrapping, depth-guided ControlNet generation, UV atlas baking, textured OBJ export, and viewer integration have been implemented and tested.
+
+Week 2 is ready for final review and completion.
