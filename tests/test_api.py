@@ -39,12 +39,29 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
     def test_prompt_is_trimmed(self):
-        response = self.client.post(
-            "/api/generate",
-            json={"prompt": "  a wooden chair  "}
-        )
+        original = self.main.run_pipeline
+        captured = {}
+
+        def fake_pipeline(prompt, *args, **kwargs):
+            captured["prompt"] = prompt
+            return {
+                "obj": "model.obj",
+                "mtl": "model.mtl",
+                "stats": {"faces": 12}
+            }
+
+        self.main.run_pipeline = fake_pipeline
+        try:
+            response = self.client.post(
+                "/api/generate",
+                json={"prompt": "  a wooden chair  "}
+            )
+        finally:
+            self.main.run_pipeline = original
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["prompt"], "a wooden chair")
+        self.assertEqual(captured["prompt"], "a wooden chair")
 
     def test_unknown_generator_is_rejected(self):
         r = self.client.post("/api/generate", json={"prompt": "a chair", "generator": "nope"})
